@@ -68,16 +68,16 @@ fig.update_layout(
 
 # tut nicht:
 
-fig.update_layout(
-    coloraxis_colorbar=dict(
-        title="Anzahl der Fahrzeuge",  # Titel der Farbskala
-        tickvals=[0, 0.5, 1],  # Positionen der Tickmarken auf der Farbskala
-        ticktext=["Niedrig", "Mittel", "Hoch"],  # Beschriftungen der Tickmarken auf der Farbskala
-        len=0.75,  # Länge der Farbskala relativ zur Kartenbreite
-        yanchor="top",  # Verankerung der Farbskala oben
-        y=0.9,  # Position der Farbskala relativ zur Kartenhöhe
-    )
-)
+# fig.update_layout(
+#     coloraxis_colorbar=dict(
+#         title="Anzahl der Fahrzeuge",  # Titel der Farbskala
+#         tickvals=[0, 0.5, 1],  # Positionen der Tickmarken auf der Farbskala
+#         ticktext=["Niedrig", "Mittel", "Hoch"],  # Beschriftungen der Tickmarken auf der Farbskala
+#         len=0.75,  # Länge der Farbskala relativ zur Kartenbreite
+#         yanchor="top",  # Verankerung der Farbskala oben
+#         y=0.9,  # Position der Farbskala relativ zur Kartenhöhe
+#     )
+# )
 
 # Karte anzeigen
 fig.show()

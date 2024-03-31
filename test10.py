@@ -5,19 +5,12 @@ import numpy as np
 # Daten aus CSV-Datei lesen
 df = pd.read_csv('/Users/patrickfunke/CodeHub/Projectautos/data/cleaned_electric_cars_data_final.csv')
 
-# Mapbox Token setzen
-token = 'YOUR_MAPBOX_TOKEN'
-colors = [
-    [0, 'rgb(173, 216, 230)'],  # Hellblau
-    [1, 'rgb(144, 238, 144)']   # Hellgrün
-]
-
 # Farbscala nach log, da kleine zu klein und seattle zu groß
 def get_log_color(count):
     max_count = np.log(df['City'].value_counts().max() + 1)
     min_count = np.log(df['City'].value_counts().min() + 1)
     normalized_count = (np.log(count + 1) - min_count) / (max_count - min_count)
-    color_scale = np.clip(normalized_count, 0, 30000) 
+    color_scale = np.clip(normalized_count, 0, 1) 
     color = (int(0 + (144 - 0) * color_scale), int(0 + (238 - 0) * color_scale), int(255 + (144 - 255) * color_scale))
     return f'rgb{color}'
 
@@ -40,22 +33,38 @@ for city in df['City'].unique():
             size=size,  # log anzahl fahrzeuge
             color=get_log_color(city_vehicle_count),  # farbe in anzahl fahrzeuge
             opacity=0.6,  # Transparenz 
-            colorscale= colors,
-
-            #Skala tut noch nicht
-            colorbar= dict(
-                title = 'skala Anzahl Autos',
-                tickvals=[0, 0.5,1],  # Positionen der Tickmarken auf der Farbskala
-                ticktext=["0", "3" ,"1"],  # Beschriftungen der Tickmarken auf der Farbskala
-                x=1.3  # Position der Farbskala auf der Karte
-                
-            )
-
         ),
         hoverinfo='text',
         hovertext=f"City: {city}<br>Total Vehicles: {city_vehicle_count}",
         name=city
     ))
+
+# Farbskala für die Legende erstellen
+color_scale_data = np.linspace(0, 1, 100)  # 100 Schritte für die Farbskala
+colors = [get_log_color(value) for value in color_scale_data]
+
+# Legende für die Farbskala erstellen
+legend = go.Scattermapbox(
+    lat=[],
+    lon=[],
+    mode='markers',
+    marker=go.scattermapbox.Marker(
+        size=0,  # Größe der Marker auf 0 setzen
+        color=color_scale_data,
+        colorscale=colors,
+        colorbar=dict(
+            title='Anzahl der Fahrzeuge',
+            tickvals=[0, 1],
+            ticktext=['0', '30000'],
+            x=1.1,  # Position der Farbskala auf der Karte
+            len=0.75  # Länge der Farbskala
+        )
+    ),
+    showlegend=False
+)
+
+# Legende zur Karte hinzufügen
+fig.add_trace(legend)
 
 # Layout der Karte einstellen
 fig.update_layout(
@@ -63,19 +72,6 @@ fig.update_layout(
         accesstoken='pk.eyJ1Ijoid2kyMzA0NCIsImEiOiJjbHUzNnhkN3AweGY5Mm1ueHlhaWl0YXdtIn0.1nuiwQqcap38GeVekTrj0A',
         center=dict(lat=df['breitengrad'].mean(), lon=df['laengengrad'].mean()),
         zoom=6.2
-    )
-)
-
-# tut nicht:
-
-fig.update_layout(
-    coloraxis_colorbar=dict(
-        title="Anzahl der Fahrzeuge",  # Titel der Farbskala
-        tickvals=[0, 0.5, 1],  # Positionen der Tickmarken auf der Farbskala
-        ticktext=["Niedrig", "Mittel", "Hoch"],  # Beschriftungen der Tickmarken auf der Farbskala
-        len=0.75,  # Länge der Farbskala relativ zur Kartenbreite
-        yanchor="top",  # Verankerung der Farbskala oben
-        y=0.9,  # Position der Farbskala relativ zur Kartenhöhe
     )
 )
 

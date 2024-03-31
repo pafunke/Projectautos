@@ -2,7 +2,12 @@ import pandas as pd
 import plotly.graph_objs
 import os
 
-df = pd.read_csv(os.path.join(os.path.dirname(__file__), '/Users/patrickfunke/CodeHub/Projectautos/data/cleaned_electric_cars_data_final.csv'), sep=',')
+#dadurch sollte Data frame immer erkannt werden solange er im selben Ordner liegt
+csvDatei = 'cleaned_electric_cars_data_final.csv'
+csv_path = os.path.join(os.path.dirname(__file__), csvDatei)
+df = pd.read_csv(csv_path)
+
+#df = pd.read_csv(os.path.join(os.path.dirname(__file__), '/Users/patrickfunke/CodeHub/Projectautos/data/cleaned_electric_cars_data_final.csv'), sep=',')
 fig = plotly.graph_objects.Figure()
 
 
@@ -25,10 +30,11 @@ for typeelecvehic, color in color_dict.items():
         marker=dict(
             size=9,
             color=color,  # Farbe basierend auf Elektrofahrzeugtyp
-            opacity=0.4,
+            opacity=0.4,    #? 
         ),
-        text=dataelecvehic[['Model', 'Make', 'Electric Vehicle Type']].astype(str),  # Anzeigetext für jeden Punkt
-        # Anzeigetext für jeden Punkt
+            # Anzeigetext für jeden Punkt:
+        text=dataelecvehic[['Model', 'Make', 'Electric Vehicle Type']].astype(str),  
+        
 
         name=typeelecvehic  # Legendenname für den Elektrofahrzeugtyp
     ))
@@ -36,22 +42,7 @@ for typeelecvehic, color in color_dict.items():
 
 print("anzahl Einträge:", count)
 
-#kann weg prüfen:
 
-# #Layout der Karte konfigurieren
-# layout = plotly.graph_objs.Layout(
-#     mapbox=dict(
-#         accesstoken='pk.eyJ1Ijoid2kyMzA0NCIsImEiOiJjbHUzNnhkN3AweGY5Mm1ueHlhaWl0YXdtIn0.1nuiwQqcap38GeVekTrj0A', 
-#         #style='streets',  # Kartentyp (z.B. 'streets', 'satellite', 'dark', 'light', etc.)
-#         bearing=0,
-#         center=dict(
-#             #Startunkt Karte
-#             lat=df['breitengrad'].mean(),lon=df['laengengrad'].mean()
-#             ),
-#         pitch=0,
-#         zoom=6.2, 
-#     )
-# )
     
 mapbox_config = {
     'accesstoken': 'pk.eyJ1Ijoid2kyMzA0NCIsImEiOiJjbHUzNnhkN3AweGY5Mm1ueHlhaWl0YXdtIn0.1nuiwQqcap38GeVekTrj0A', 
