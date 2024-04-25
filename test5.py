@@ -1,47 +1,56 @@
-import plotly.graph_objects as go
 import pandas as pd
-import numpy as np
+import plotly.graph_objects as go
+import dash
+from dash import dcc, html, Input, Output
+import os
 
-# Daten aus CSV-Datei lesen
-df = pd.read_csv('/Users/patrickfunke/CodeHub/Projectautos/data/cleaned_electric_cars_data_final.csv')
+# Daten aus der CSV-Datei laden
+csvDatei = 'cleaned_electric_cars_data_final.csv'
+csv_path = os.path.join(os.path.dirname(__file__), csvDatei)
+df = pd.read_csv(csv_path)
 
-# Mapbox Token setzen
-token = 'YOUR_MAPBOX_TOKEN'
+# Dash-App initialisieren
+app = dash.Dash(__name__)
 
-# Karte erstellen
-fig = go.Figure()
+# Jahre aus der CSV-Datei extrahieren
+years = df['Model Year'].unique()
 
-# Städte hinzufügen
-for city in df['City'].unique():
-    city_data = df[df['City'] == city]
-    city_vehicle_count = city_data.shape[0]  # Anzahl der einzigartigen Fahrzeuge in der Stadt
-    if city_vehicle_count > 0:
-        size = np.log(city_vehicle_count + 1)*2  # Logarithmische Skalierung der Kreisgröße
-    else:
-        size = 3  # Mindestgröße für Städte ohne Fahrzeuge
-    fig.add_trace(go.Scattermapbox(
-        lat=[city_data.iloc[0]['breitengrad']],  # Breitengrad der Stadt
-        lon=[city_data.iloc[0]['laengengrad']],  # Längengrad der Stadt
-        mode='markers',
-        marker=go.scattermapbox.Marker(
-            size=size,  # Kreisgröße basierend auf logarithmisch transformierten Anzahl der einzigartigen Fahrzeuge
-            color=city_vehicle_count,  # Farbe der Marker
-            opacity=0.7,  # Transparenz der Marker
-            showscale=True
-        ),
-        hoverinfo='text',
-        hovertext=f"City: {city}<br>Total Vehicles: {city_vehicle_count}",
-        name=city
-    ))
+# Layout der Dash-App definieren
+app.layout = html.Div([
+    html.Label("Wähle ein Jahr:"),
+    dcc.Dropdown(
+        id='year-dropdown',
+        options=[{'label': str(year), 'value': year} for year in years],
+        value=years[0]
+    ),
+    html.Div(id='output-container')
+])
 
-# Layout der Karte einstellen
-fig.update_layout(
-    mapbox=dict(
-        accesstoken='pk.eyJ1Ijoid2kyMzA0NCIsImEiOiJjbHUzNnhkN3AweGY5Mm1ueHlhaWl0YXdtIn0.1nuiwQqcap38GeVekTrj0A',
-        center=dict(lat=df['breitengrad'].mean(), lon=df['laengengrad'].mean()),
-        zoom=6.2
-    )
+# Callback-Funktion für die Aktualisierung der Ausgabe
+@app.callback(
+    Output('output-container', 'children'),
+    [Input('year-dropdown', 'value')]
 )
+def update_output(selected_year):
+    # Nach dem ausgewählten Jahr filtern
+    filtered_data = df[df['Model Year'] == selected_year]
 
-# Karte anzeigen
-fig.show()
+    # Anzahl der jeweils gleichen Auto-Modelle und -Makes zählen
+    model_counts = filtered_data['Model'].value_counts().head(10)
+    make_counts = filtered_data['Make'].value_counts().head(10)
+
+    # Plotly Diagramme erstellen
+    fig = go.Figure(data=[
+        go.Bar(name='Model', x=model_counts.index, y=model_counts.values),
+        go.Bar(name='Make', x=make_counts.index, y=make_counts.values)
+    ])
+
+    # Layout anpassen
+    fig.update_layout(barmode='group', title=f'Top 10 Modelle und Makes im Jahr {selected_year}', xaxis_title='Modelle und Makes', yaxis_title='Anzahl')
+
+    # Diagramm in Dash-Komponente umwandeln und zurückgeben
+    return dcc.Graph(figure=fig)
+
+# Dash-App starten
+if __name__ == '__main__':
+    app.run_server(debug=True)

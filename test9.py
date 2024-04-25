@@ -1,69 +1,60 @@
-import plotly.graph_objects as go
 import pandas as pd
-import numpy as np
+import plotly.graph_objects as go
+import dash
+from dash import dcc, html, Input, Output
+import os
 
-# Daten aus CSV-Datei lesen
-df = pd.read_csv('/Users/patrickfunke/CodeHub/Projectautos/data/cleaned_electric_cars_data_final.csv')
+# Daten aus der CSV-Datei laden
+csvDatei = 'cleaned_electric_cars_data_final.csv'
+csv_path = os.path.join(os.path.dirname(__file__), csvDatei)
+df = pd.read_csv(csv_path)
 
-# Mapbox Token setzen
-token = 'YOUR_MAPBOX_TOKEN'
-colors = [
-    [0, 'rgb(173, 216, 230)'],  # Hellblau
-    [1, 'rgb(144, 238, 144)']   # Hellgrün
-]
+# Dash-App initialisieren
+app = dash.Dash(__name__)
 
-# Farbscala nach log, da kleine zu klein und seattle zu groß
-def get_log_color(count):
-    max_count = np.log(df['City'].value_counts().max() + 1)
-    min_count = np.log(df['City'].value_counts().min() + 1)
-    normalized_count = (np.log(count + 1) - min_count) / (max_count - min_count)
-    color_scale = np.clip(normalized_count, 0, 30000) 
-    color = (int(0 + (144 - 0) * color_scale), int(0 + (238 - 0) * color_scale), int(255 + (144 - 255) * color_scale))
-    return f'rgb{color}'
+# Jahre aus der CSV-Datei extrahieren
+valid_years = sorted(df['Model Year'].unique())
 
-# Karte erstellen
-fig = go.Figure()
+# Layout der Dash-App definieren
+app.layout = html.Div([
+    html.Label("Wähle ein Jahr:"),
+    dcc.Slider(
+        id='year-slider',
+        min=min(valid_years),
+        max=max(valid_years),
+        step=1,
+        value=min(valid_years),
+        marks={year: str(year) for year in valid_years},
+    ),
+    html.Div([
+        html.Div(dcc.Graph(id='model-graph'), style={'width': '50%', 'display': 'inline-block'}),
+        html.Div(dcc.Graph(id='make-graph'), style={'width': '50%', 'display': 'inline-block'})
+    ])
+])
 
-# Städte hinzufügen
-for city in df['City'].unique():
-    city_data = df[df['City'] == city]
-    city_vehicle_count = city_data.shape[0]  # Anzahl der einzigartigen Fahrzeuge in der Stadt
-    if city_vehicle_count > 0:
-        size = np.log(city_vehicle_count + 1)*2  # Logarithmische Skalierung der Kreisgröße
-    else:
-        size = 3  # Mindestgröße für Städte ohne Fahrzeuge
-    fig.add_trace(go.Scattermapbox(
-        lat=[city_data.iloc[0]['breitengrad']],  # Breitengrad der Stadt
-        lon=[city_data.iloc[0]['laengengrad']],  # Längengrad der Stadt
-        mode='markers',
-        marker=go.scattermapbox.Marker(
-            size=size,  # log anzahl fahrzeuge
-            color=get_log_color(city_vehicle_count),  # farbe in anzahl fahrzeuge
-            opacity=0.6,  # Transparenz 
-            colorscale= colors,
-            cmin=1,  # Minimalwert der Farbskala erhöht
-            cmax=df['City'].value_counts().max(),  # Höchstwert der Farbskala
-            colorbar=dict(
-                title='skala Anzahl Autos',
-                tickvals=[0, 0.5, 1],  # Positionen der Tickmarken auf der Farbskala
-                ticktext=["Niedrig", "Mittel", "Hoch"],  # Beschriftungen der Tickmarken auf der Farbskala
-                x=1.3  # Position der Farbskala auf der Karte
-            )
-
-        ),
-        hoverinfo='text',
-        hovertext=f"City: {city}<br>Total Vehicles: {city_vehicle_count}",
-        name=city
-    ))
-
-# Layout der Karte einstellen
-fig.update_layout(
-    mapbox=dict(
-        accesstoken='pk.eyJ1Ijoid2kyMzA0NCIsImEiOiJjbHUzNnhkN3AweGY5Mm1ueHlhaWl0YXdtIn0.1nuiwQqcap38GeVekTrj0A',
-        center=dict(lat=df['breitengrad'].mean(), lon=df['laengengrad'].mean()),
-        zoom=6.2
-    )
+# Callback-Funktion für die Aktualisierung der Diagramme
+@app.callback(
+    [Output('model-graph', 'figure'),
+     Output('make-graph', 'figure')],
+    [Input('year-slider', 'value')]
 )
+def update_graphs(selected_year):
+    # Nach dem ausgewählten Jahr filtern
+    filtered_data = df[df['Model Year'] == selected_year]
 
-# Karte anzeigen
-fig.show()
+    # Anzahl der jeweils gleichen Auto-Modelle und -Makes zählen
+    model_counts = filtered_data['Model'].value_counts().head(10)
+    make_counts = filtered_data['Make'].value_counts().head(10)
+
+    # Plotly Diagramme für Modelle und Makes erstellen
+    model_fig = go.Figure(go.Bar(x=model_counts.index, y=model_counts.values))
+    model_fig.update_layout(title=f'Top 10 Modelle im Jahr {selected_year}', xaxis_title='Modelle', yaxis_title='Anzahl')
+
+    make_fig = go.Figure(go.Bar(x=make_counts.index, y=make_counts.values))
+    make_fig.update_layout(title=f'Top 10 Marken im Jahr {selected_year}', xaxis_title='Marken', yaxis_title='Anzahl')
+
+    return model_fig, make_fig
+
+# Dash-App starten
+if __name__ == '__main__':
+    app.run_server(debug=True)

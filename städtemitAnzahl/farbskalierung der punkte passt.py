@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 # Daten aus CSV-Datei lesen
-df = pd.read_csv('/Users/patrickfunke/CodeHub/Projectautos/data/cleaned_electric_cars_data_final.csv')
+df = pd.read_csv('/Users/patrickfunke/CodeHub/Projectautos/Fertige Visualisierungen/cleaned_electric_cars_data_final.csv')
 
 # Mapbox Token setzen
 token = 'YOUR_MAPBOX_TOKEN'

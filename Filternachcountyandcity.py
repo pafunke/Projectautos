@@ -3,7 +3,7 @@ import plotly.graph_objs as go
 import os
 
 # Lesen der Daten
-df = pd.read_csv('/Users/patrickfunke/CodeHub/Projectautos/data/cleaned_electric_cars_data_final.csv')
+df = pd.read_csv('Users/patrickfunke/CodeHub/Projectautos/Fertige Visualisierungen/cleaned_electric_cars_data_final.csv')
 
 # Funktion zum Erstellen des Karteninhalts
 def create_map_data(df, location_type=None, location=None):
