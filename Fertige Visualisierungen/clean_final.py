@@ -1,8 +1,7 @@
 import pandas as pd
 import os
-
 # Laden des Datensatzes
-df = pd.read_csv(os.path.join(os.path.dirname(__file__), '/Users/patrickfunke/src/DataVisulization/Project/data/Electric_Vehicle_Population_Data.csv'), sep=',')
+df = pd.read_csv(os.path.join(os.path.dirname(__file__), '/Users/patrickfunke/CodeHub/Projectautos/data/Electric_Vehicle_Population_Data.csv'), sep=',')
 
 # Anzeigen der ersten paar Zeilen des Datensatzes
 print("Vor der Bereinigung:")
@@ -17,6 +16,8 @@ categorical_columns = ['County', 'City', 'State', 'Make', 'Model', 'Electric Veh
 df[categorical_columns] = df[categorical_columns].apply(lambda x: x.str.lower())
 df[categorical_columns] = df[categorical_columns].applymap(lambda x: x.strip() if isinstance(x, str) else x)
 
+# Setze 'Electric Vehicle Type' auf 'battery electric vehicle (bev)' für alle Einträge mit 'Model' == 'i3'
+df.loc[df['Model'] == 'i3', 'Electric Vehicle Type'] = 'battery electric vehicle (bev)'
 
 #Katasstrophe:
 
@@ -55,4 +56,4 @@ df.drop(columns=['Vehicle Location'], inplace=True)
 print(df.head())
 
 # Speichern des bereinigten Datensatzes
-df.to_csv('cleaned_electric_cars_data_final.csv', index=False)
+df.to_csv('cleaned_electric_cars_data_final_2.csv', index=False)
